@@ -1,0 +1,65 @@
+# docker-compose.yml
+# version: '3.8'
+
+services:
+  # The Flask API service
+  backend:
+    build: .  # Path to the backend's Dockerfile
+
+    ports:
+      - "5000:5000" # Map host port 5000 to container port 5000
+
+    volumes:
+      - .:/app # Mount local code for live-reloading in dev
+
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.app:app
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flask.rule=Host(`todo.docker.localhost`)"
+      - "traefik.http.routers.flask.entrypoints=web"
+      - "traefik.http.services.flask.loadbalancer.server.port=5000"
+
+    networks:
+      - proxy
+
+
+   # --- Redis Service ---
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.redis.rule=Host(`redis.docker.localhost`)
+    volumes:
+      - redis_data:/data
+    networks:
+      - proxy
+
+  traefik:
+    image: traefik:v3.4
+    container_name: traefik
+    restart: unless-stopped
+
+    networks:
+      - proxy
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
+
+networks:
+  proxy:
+    external: true
+
+# --- Volumes ---
+volumes:
+  redis_data:
