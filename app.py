@@ -40,7 +40,7 @@ todos_schema = TodoSchema(many=True)
 
 @app.route("/", methods=['GET'])
 def home():
-    return jsonify({'Version':'2','message':'There is nothing visit /todos, /todo/id'})
+    return jsonify({'Version':'new','message':'There is nothing visit /todos, /todo/id'})
 
 
 @app.route('/todos', methods=['GET'])
